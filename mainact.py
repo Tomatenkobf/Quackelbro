@@ -4,7 +4,7 @@ from telethon import TelegramClient,events
 import RPi.GPIO as GPIO
 import os
 import yaml
-#from time import sleep
+from time import sleep
 import asyncio
 import signal
 #import board
@@ -246,10 +246,6 @@ async def receiveTG(event):
             await asyncio.sleep(0.2)
             #os.system('/usr/bin/cvlc --play-and-exit ' +  name)
 
-#Write state to yaml file
-config['is_auth'] = 'checked' if client.get_me() else ''
-with open('/home/tomatenkobf/web/config.yaml', 'w') as f:
-    yaml.safe_dump(config, f)
 
 def wait_for_code():
     while True:
@@ -262,36 +258,17 @@ def wait_for_code():
             with open('/home/tomatenkobf/web/config.yaml', 'w') as f:
                 yaml.safe_dump(config, f)
             return buf
-        print("Waiting for auth code...")
-        if config['is_auth'] != '':
-            config['is_auth'] =  ''
+        elif config['is_auth'] != '':
+            config['is_auth'] = ''
             with open('/home/tomatenkobf/web/config.yaml', 'w') as f:
                 yaml.safe_dump(config, f)
+        print("Waiting for auth code...")
         sleep(5)
 
-#client.sign_in(config['phonenumber'],'60286')
+
 client.start(phone=config['phonenumber'], code_callback=wait_for_code)
 
 
-print("signed in")
-
-'''
-if client.is_user_authorized():
-    print("You are authorized!")  
-else:
-    print("You are not authorized!")  
-    client.send_code_request(config['phonenumber'])
-    #Check if config['auth_code'] is set
-    while config['auth_code'] == '':
-        sleep(5)
-        print("Waiting for auth code...")
-        with open('/home/tomatenkobf/web/config.yaml', 'r') as f:
-            config = yaml.safe_load(f)
-    client.sign_in(config['phonenumber'], config['auth_code'])
-    config['auth_code'] = ''
-    with open('/home/tomatenkobf/web/config.yaml', 'w') as f:
-        yaml.safe_dump(config, f)
-'''
 os.system('/usr/bin/cvlc --play-and-exit --gain=' + str(audio_gain_notification) + ' /home/tomatenkobf/quackelbro/toene/flute_notification.wav')
 loop = asyncio.get_event_loop()
 loop.create_task(recTG())
