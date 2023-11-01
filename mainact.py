@@ -254,7 +254,6 @@ def wait_for_code():
         if config['auth_code'] != '':
             buf = config['auth_code']
             config['auth_code'] = ''
-            config['is_auth'] = 'checked'
             with open('/home/tomatenkobf/web/config.yaml', 'w') as f:
                 yaml.safe_dump(config, f)
             return buf
@@ -267,6 +266,12 @@ def wait_for_code():
 
 
 client.start(phone=config['phonenumber'], code_callback=wait_for_code)
+if client.is_connected():
+    print("Connected to Telegram")
+    config['is_auth'] = 'checked'
+    with open('/home/tomatenkobf/web/config.yaml', 'w') as f:
+        yaml.safe_dump(config, f)
+
 
 
 os.system('/usr/bin/cvlc --play-and-exit --gain=' + str(audio_gain_notification) + ' /home/tomatenkobf/quackelbro/toene/flute_notification.wav')
