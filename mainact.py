@@ -64,6 +64,8 @@ GPIO.setup(shutBUT, GPIO.IN)
 GPIO.setup(motor, GPIO.OUT)
 GPIO.output(recLED, GPIO.LOW)
 
+os.chdir('/home/tomatenkobf/quackelbro/')
+
 #read config file
 with open('/home/tomatenkobf/web/config.yaml', 'r') as f:
     config = yaml.safe_load(f)
