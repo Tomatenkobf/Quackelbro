@@ -9,6 +9,7 @@ import asyncio
 import signal
 #import board
 from random import randint
+import requests
 
 """
 initialisation of GPIOs
@@ -16,7 +17,7 @@ initialisation of GPIOs
 
 global recLED      #led recording (mic+)
 global recBUT      #button recording (mic+)
-global playLED     #led you have a voicemail
+#global playLED     #led you have a voicemail
 
 global toPlay      # number of voicemail waiting
 global recD        # duration of recording (in half second)
@@ -39,10 +40,11 @@ time_var = 0
 pinS0 = 27
 pinS1 = 22
 toPlay = -1
-playLED = 10
+#playLED = 10
 recLED = 25
 recBUT = 23
 motor = 17
+shutBUT = 10
 
 
 """
@@ -57,7 +59,8 @@ GPIO.setup(pinS0, GPIO.OUT)
 GPIO.setup(pinS1, GPIO.OUT)
 #GPIO.setup(shutBUT, GPIO.IN,pull_up_down=GPIO.PUD_UP)
 #GPIO.add_event_detect(shutBUT,GPIO.FALLING)
-GPIO.setup(playLED, GPIO.OUT)
+#GPIO.setup(playLED, GPIO.OUT)
+GPIO.setup(shutBUT, GPIO.IN)
 GPIO.setup(motor, GPIO.OUT)
 GPIO.output(recLED, GPIO.LOW)
 
@@ -72,7 +75,7 @@ print("audio gain voice is" + str(audio_gain_voice))
 # Use your own values from my.telegram.org
 api_id = config['api_id']
 api_hash = config['api_hash']
-client = TelegramClient('anon', api_id, api_hash)
+client = TelegramClient('/home/tomatenkobf/quackelbro/anon.session', api_id, api_hash)
 
 
 @client.on(events.NewMessage)
@@ -196,12 +199,12 @@ async def playTG():
     while True:
         if toPlay >= 0:
             #print("toPlay = ", toPlay)
-            GPIO.output(playLED, GPIO.HIGH)
+            #GPIO.output(playLED, GPIO.HIGH)
             heartBeatLed = True
             GPIO.output(pinS0, GPIO.LOW)
             
         else:
-            GPIO.output(playLED, GPIO.LOW)
+            #GPIO.output(playLED, GPIO.LOW)
             heartBeatLed = False
             GPIO.output(pinS0, GPIO.HIGH)
 
@@ -224,6 +227,21 @@ async def playTG():
             #playOKD = 30     
         await asyncio.sleep(0.2)
 
+async def listen_for_shutdown():
+    """
+    script that listens for a shutdown signal on BCM Pin 10
+    """
+    while True:
+        if GPIO.input(10) == GPIO.LOW:
+            #play shutdown sound
+            os.system('/usr/bin/cvlc --play-and-exit --gain=' + str(audio_gain_notification) + ' /home/tomatenkobf/quackelbro/toene/shutdown.wav')
+            await asyncio.sleep(0.5)
+            #clean up GPIOs
+            GPIO.cleanup()
+            await asyncio.sleep(0.7)
+            #shutdown
+            os.system("sudo shutdown -h now")
+        await asyncio.sleep(0.4)
 
 @client.on(events.NewMessage)
 async def receiveTG(event):
@@ -264,7 +282,6 @@ def wait_for_code():
         print("Waiting for auth code...")
         sleep(5)
 
-
 client.start(phone=config['phonenumber'], code_callback=wait_for_code)
 if client.is_connected():
     print("Connected to Telegram")
@@ -279,5 +296,6 @@ loop = asyncio.get_event_loop()
 loop.create_task(recTG())
 loop.create_task(playTG())
 loop.create_task(timeC())
+loop.create_task(listen_for_shutdown())
 loop.run_forever()
 client.run_until_disconnected()
