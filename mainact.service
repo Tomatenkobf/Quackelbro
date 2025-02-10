@@ -4,7 +4,7 @@ After=network.target
 
 [Service]
 Type=oneshot
-ExecStart=/full/path/to/my_script.sh
+ExecStart=/home/tomatenkobf/start_quackelbro.sh
 
 [Install]
 WantedBy=multi-user.target
